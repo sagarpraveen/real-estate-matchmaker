@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NestMatch — Swipe Your Dream Lifestyle</title>
+  <meta name="description" content="Property Tinder & Lifestyle Matchmaker: Discover homes matching your design aesthetic, neighborhood vibe, commute tolerance, and budget.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Header / Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand" id="brand-logo">
+        <div class="brand-icon">
+          <i class="fa-solid fa-house-chimney-window"></i>
+          <span class="pulse-sparkle">✨</span>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">Nest<span>Match</span></span>
+          <span class="brand-tagline">Lifestyle Real Estate</span>
+        </div>
+      </div>
+
+      <!-- Nav Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-tab-btn active" data-tab="discover-tab" id="nav-discover">
+          <i class="fa-solid fa-fire"></i>
+          <span>Discover</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="matches-tab" id="nav-matches">
+          <i class="fa-solid fa-heart"></i>
+          <span>Shortlist</span>
+          <span class="badge" id="matches-badge">0</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="map-tab" id="nav-map">
+          <i class="fa-solid fa-map-location-dot"></i>
+          <span>Map Radar</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="compare-tab" id="nav-compare">
+          <i class="fa-solid fa-code-compare"></i>
+          <span>Compare</span>
+          <span class="badge compare-badge" id="compare-badge">0</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="calculator-tab" id="nav-calculator">
+          <i class="fa-solid fa-calculator"></i>
+          <span>Mortgage Lab</span>
+        </button>
+      </nav>
+
+      <!-- Nav Action Controls -->
+      <div class="nav-actions">
+        <button class="icon-btn" id="filter-btn" title="Filter Vibes & Budget">
+          <i class="fa-solid fa-sliders"></i>
+          <span class="btn-text">Filters</span>
+          <span class="active-dot" id="filter-active-dot" style="display:none;"></span>
+        </button>
+        <button class="icon-btn" id="reset-deck-btn" title="Reset Swipes">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Viewport Content -->
+  <main class="main-content">
+    
+    <!-- 1. DISCOVER / SWIPE TAB -->
+    <section class="tab-pane active" id="discover-tab">
+      <div class="deck-wrapper">
+        
+        <!-- Keyboard shortcuts reminder -->
+        <div class="shortcuts-hint">
+          <span><kbd>&larr;</kbd> Pass</span>
+          <span><kbd>&uarr;</kbd> Superlike</span>
+          <span><kbd>&rarr;</kbd> Like</span>
+          <span><kbd>Space</kbd> Details</span>
+        </div>
+
+        <!-- The Card Stack Container -->
+        <div class="card-stack-container" id="card-stack">
+          <!-- Dynamically populated cards will be placed here -->
+          <div class="loading-spinner-wrapper" id="deck-loading">
+            <div class="glow-spinner"></div>
+            <p>Curating homes matching your vibe...</p>
+          </div>
+        </div>
+
+        <!-- Floating Swipe Action Buttons -->
+        <div class="swipe-action-bar" id="swipe-action-bar">
+          <button class="action-btn undo-btn" id="btn-undo" title="Undo Last Swipe (Z)">
+            <i class="fa-solid fa-arrow-rotate-left"></i>
+          </button>
+          <button class="action-btn pass-btn" id="btn-pass" title="Pass / Swipe Left (Arrow Left)">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <button class="action-btn superlike-btn" id="btn-superlike" title="Superlike / Swipe Up (Arrow Up)">
+            <i class="fa-solid fa-star"></i>
+          </button>
+          <button class="action-btn like-btn" id="btn-like" title="Like / Swipe Right (Arrow Right)">
+            <i class="fa-solid fa-heart"></i>
+          </button>
+          <button class="action-btn info-btn" id="btn-info" title="Inspect Specs (Space)">
+            <i class="fa-solid fa-expand"></i>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 2. SHORTLIST / MATCHES TAB -->
+    <section class="tab-pane" id="matches-tab">
+      <div class="container matches-view">
+        <div class="matches-header">
+          <div>
+            <h2>Your Shortlisted Sanctuaries</h2>
+            <p class="subtitle">Properties you've swiped right on. Select up to 4 to compare side-by-side.</p>
+          </div>
+          <div class="matches-filter-pills">
+            <button class="pill-btn active" data-filter="all">All (<span id="count-all">0</span>)</button>
+            <button class="pill-btn" data-filter="superlike">Superlikes (<span id="count-superlikes">0</span>)</button>
+            <button class="pill-btn" data-filter="like">Likes (<span id="count-likes">0</span>)</button>
+          </div>
+        </div>
+
+        <!-- Selected comparison floating bar -->
+        <div class="compare-tray" id="compare-tray" style="display: none;">
+          <div class="compare-tray-content">
+            <span id="compare-tray-text">2 properties selected for comparison</span>
+            <div class="compare-tray-buttons">
+              <button class="primary-btn" id="trigger-compare-btn">
+                <i class="fa-solid fa-code-compare"></i> Compare Now
+              </button>
+              <button class="text-btn" id="clear-compare-btn">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="matches-grid" id="matches-grid">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <div class="empty-state" id="matches-empty" style="display:none;">
+          <div class="empty-icon"><i class="fa-solid fa-heart-crack"></i></div>
+          <h3>No shortlisted homes yet!</h3>
+          <p>Head over to Discover and swipe right on spaces that inspire you.</p>
+          <button class="primary-btn" onclick="document.getElementById('nav-discover').click()">
+            <i class="fa-solid fa-fire"></i> Start Swiping
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. MAP RADAR TAB -->
+    <section class="tab-pane" id="map-tab">
+      <div class="map-view-layout">
+        <div class="map-sidebar">
+          <div class="sidebar-header">
+            <h3>Geographic Radar</h3>
+            <p>Explore homes plotted against commute zones and neighborhood hotspots.</p>
+          </div>
+          <div class="map-controls">
+            <label class="input-label" for="commute-select">Commute Destination Target</label>
+            <select class="styled-select" id="commute-select">
+              <option value="Downtown Tech Core">Downtown Tech Core</option>
+              <option value="Financial District">Financial District</option>
+              <option value="Creative Arts District">Creative Arts District</option>
+              <option value="Airport">Airport Hub</option>
+            </select>
+          </div>
+          <div class="map-property-list" id="map-property-list">
+            <!-- Property mini list syncing with map markers -->
+          </div>
+        </div>
+        <div class="map-canvas-container">
+          <div id="leaflet-map"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. COMPARE TAB -->
+    <section class="tab-pane" id="compare-tab">
+      <div class="container compare-view">
+        <div class="compare-header">
+          <h2>Side-by-Side Property Matrix</h2>
+          <p class="subtitle">Direct comparison of shortlisted properties across price, metrics, aesthetics, and lifestyle scores.</p>
+        </div>
+
+        <div class="compare-matrix-wrapper" id="compare-matrix-wrapper">
+          <div class="empty-state" id="compare-empty">
+            <div class="empty-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+            <h3>No properties selected for comparison</h3>
+            <p>Visit your Shortlist and check 2 to 4 properties to view a detailed breakdown.</p>
+            <button class="primary-btn" onclick="document.getElementById('nav-matches').click()">
+              <i class="fa-solid fa-heart"></i> Go to Shortlist
+            </button>
+          </div>
+          <div id="compare-table-container"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. MORTGAGE LAB TAB -->
+    <section class="tab-pane" id="calculator-tab">
+      <div class="container calculator-view">
+        <div class="calc-header">
+          <h2>Interactive Mortgage & Cash Flow Lab</h2>
+          <p class="subtitle">Calculate monthly commitments, amortized interest, property taxes, and HOA impact with precision.</p>
+        </div>
+
+        <div class="calc-grid">
+          <!-- Calculator Inputs -->
+          <div class="calc-card inputs-card">
+            <h3>Financing Parameters</h3>
+
+            <div class="form-group">
+              <div class="slider-header">
+                <label for="calc-price-input">Home Purchase Price</label>
+                <span class="value-display" id="disp-calc-price">$850,000</span>
+              </div>
+              <input type="range" id="calc-price-input" min="300000" max="2500000" step="10000" value="850000">
+            </div>
+
+            <div class="form-group">
+              <div class="slider-header">
+                <label for="calc-down-input">Down Payment (%)</label>
+                <span class="value-display" id="disp-calc-down">20% ($170,000)</span>
+              </div>
+              <input type="range" id="calc-down-input" min="3" max="50" step="1" value="20">
+            </div>
+
+            <div class="form-group">
+              <div class="slider-header">
+                <label for="calc-rate-input">Interest Rate (%)</label>
+                <span class="value-display" id="disp-calc-rate">6.50%</span>
+              </div>
+              <input type="range" id="calc-rate-input" min="3.0" max="11.0" step="0.1" value="6.5">
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="calc-term-input">Loan Term</label>
+                <select class="styled-select" id="calc-term-input">
+                  <option value="30">30 Years Fixed</option>
+                  <option value="15">15 Years Fixed</option>
+                  <option value="20">20 Years Fixed</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="calc-tax-rate">Property Tax Rate (%)</label>
+                <input type="number" class="styled-input" id="calc-tax-rate" value="1.2" step="0.1" min="0.1" max="4.0">
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="calc-hoa-input">Monthly HOA ($)</label>
+                <input type="number" class="styled-input" id="calc-hoa-input" value="350" step="25" min="0">
+              </div>
+              <div class="form-group">
+                <label for="calc-insurance-input">Annual Insurance ($)</label>
+                <input type="number" class="styled-input" id="calc-insurance-input" value="1400" step="50" min="0">
+              </div>
+            </div>
+
+            <button class="secondary-btn" id="load-active-prop-calc">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Load Active Card Price & HOA
+            </button>
+          </div>
+
+          <!-- Output Hero Breakdown -->
+          <div class="calc-card results-card">
+            <div class="hero-payment">
+              <span class="label">Estimated Total Monthly Payment</span>
+              <div class="amount" id="total-monthly-amount">$5,432<span class="mo">/mo</span></div>
+            </div>
+
+            <!-- Visual Progress Bar Breakdown -->
+            <div class="breakdown-bar-wrap">
+              <div class="breakdown-bar" id="breakdown-bar">
+                <div class="bar-seg pi" id="bar-pi" style="width: 70%;"></div>
+                <div class="bar-seg tax" id="bar-tax" style="width: 15%;"></div>
+                <div class="bar-seg ins" id="bar-ins" style="width: 5%;"></div>
+                <div class="bar-seg hoa" id="bar-hoa" style="width: 10%;"></div>
+              </div>
+            </div>
+
+            <div class="breakdown-list">
+              <div class="breakdown-item">
+                <span class="dot pi"></span>
+                <span class="item-name">Principal & Interest</span>
+                <span class="item-val" id="val-pi">$4,298</span>
+              </div>
+              <div class="breakdown-item">
+                <span class="dot tax"></span>
+                <span class="item-name">Property Taxes</span>
+                <span class="item-val" id="val-tax">$850</span>
+              </div>
+              <div class="breakdown-item">
+                <span class="dot ins"></span>
+                <span class="item-name">Homeowner's Insurance</span>
+                <span class="item-val" id="val-ins">$117</span>
+              </div>
+              <div class="breakdown-item">
+                <span class="dot hoa"></span>
+                <span class="item-name">HOA Fee</span>
+                <span class="item-val" id="val-hoa">$350</span>
+              </div>
+            </div>
+
+            <div class="summary-stats-grid">
+              <div class="stat-pill">
+                <span class="stat-lbl">Loan Principal</span>
+                <span class="stat-val" id="val-loan-amt">$680,000</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-lbl">Down Payment</span>
+                <span class="stat-val" id="val-down-amt">$170,000</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-lbl">Total Interest (Life)</span>
+                <span class="stat-val" id="val-total-interest">$867,280</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FILTER MODAL -->
+  <div class="modal-backdrop" id="filter-modal" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-sliders"></i>
+          <h3>Vibe & Lifestyle Filters</h3>
+        </div>
+        <button class="close-btn" id="close-filter-modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Budget Slider -->
+        <div class="form-group">
+          <div class="slider-header">
+            <label for="filter-max-price">Max Budget</label>
+            <span class="value-display" id="disp-filter-max-price">$1,500,000</span>
+          </div>
+          <input type="range" id="filter-max-price" min="500000" max="2000000" step="50000" value="1500000">
+        </div>
+
+        <!-- Commute Hub -->
+        <div class="form-group">
+          <label for="filter-commute-hub">Primary Commute Destination</label>
+          <select class="styled-select" id="filter-commute-hub">
+            <option value="Downtown Tech Core">Downtown Tech Core</option>
+            <option value="Financial District">Financial District</option>
+            <option value="Creative Arts District">Creative Arts District</option>
+            <option value="Airport">Airport Hub</option>
+          </select>
+        </div>
+
+        <!-- Lifestyle Vibe Chips -->
+        <div class="form-group">
+          <label>Aesthetic & Lifestyle Vibes</label>
+          <div class="vibe-chips-wrap" id="vibe-chips-container">
+            <!-- Vibe toggle chips loaded dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="text-btn" id="reset-filter-btn">Reset All</button>
+        <button class="primary-btn" id="apply-filter-btn">
+          <i class="fa-solid fa-check"></i> Apply Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROPERTY DETAIL DRAWER (OFF-CANVAS) -->
+  <div class="drawer-backdrop" id="property-drawer" style="display:none;">
+    <div class="drawer-panel" id="drawer-panel">
+      <div class="drawer-header">
+        <button class="drawer-close-btn" id="close-drawer-btn">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="drawer-actions-top">
+          <button class="pill-action-btn" id="drawer-like-btn">
+            <i class="fa-solid fa-heart"></i> Like
+          </button>
+          <button class="pill-action-btn" id="drawer-calc-btn">
+            <i class="fa-solid fa-calculator"></i> Calc
+          </button>
+        </div>
+      </div>
+
+      <div class="drawer-body" id="drawer-content">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- App Scripts -->
+  <script src="/static/js/swipe.js"></script>
+  <script src="/static/js/map.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
